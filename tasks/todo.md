@@ -34,12 +34,18 @@ Glasswing. `git init` locally (no remote yet).
 an app icon and the accent colour.
 
 **Acceptance criteria:**
-- [ ] `project.yml` declares the app, a unit-test host and a UI-test target, and depends on the local package
-- [ ] Info.plist keys are generated from `project.yml` (no hand-written plist), including background audio
+- [x] `project.yml` declares the app, a unit-test host and a UI-test target, and depends on the local package
+- [x] Info.plist keys are generated from `project.yml`, except `UIBackgroundModes: audio`, which has no
+      `INFOPLIST_KEY_` setting and lives in a 1-key partial `ios/Support/Info.plist` merged in (Glasswing's pattern)
 
 **Verification:**
-- [ ] Build succeeds: on CI in Task 3 (`xcodegen generate` + `xcodebuild archive`); locally only a YAML check
-- [ ] Manual check: diff against Glasswing's `project.yml` for the same settings
+- [ ] Build succeeds: on CI in Task 3 (`xcodegen generate` + `xcodebuild archive`) — **still open**
+- [x] Local checks (2026-11-14): `project.yml` parses (Ruby YAML; 3 targets, test scheme), `plutil -lint` OK, asset
+      JSON valid, icon 1024×1024 opaque, `ios/test-local.sh` still green
+- [x] Manual check: same settings as Glasswing's current `project.yml` (minus MPVKit, plus test targets)
+
+Also added: `ios/tools/make-icon.swift` (regenerates the placeholder icon), `EarmarkTests/RootViewTests.swift`,
+`EarmarkUITests/LaunchSmokeTests.swift`.
 
 **Dependencies:** Task 1
 

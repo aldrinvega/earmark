@@ -1,0 +1,88 @@
+# XcodeGen spec for the Earmark app (SPEC.md, tasks/todo.md Task 2). The .xcodeproj is generated on CI and not
+# committed (there is no Xcode on the Mac):
+#   xcodegen generate --spec ios/project.yml
+name: Earmark
+options:
+  bundleIdPrefix: local
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+packages:
+  EarmarkKit:
+    path: EarmarkKit
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  Earmark:
+    type: application
+    platform: iOS
+    sources:
+      - path: Earmark
+    dependencies:
+      - package: EarmarkKit
+        product: Models
+      - package: EarmarkKit
+        product: Store
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: local.earmark
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        # Keys with no INFOPLIST_KEY_ setting (UIBackgroundModes: audio) live here and are merged in.
+        INFOPLIST_FILE: Support/Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: Earmark
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_PREVIEWS: YES
+
+  # Unit tests that need the app or iOS frameworks (performance, adapters). Package logic is tested in EarmarkKit.
+  EarmarkTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: EarmarkTests
+    dependencies:
+      - target: Earmark
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: local.earmark.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+  # UI smoke test (later: stub-server mode, -EarmarkStubServers).
+  EarmarkUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: EarmarkUITests
+    dependencies:
+      - target: Earmark
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: local.earmark.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Earmark
+
+schemes:
+  Earmark:
+    build:
+      targets:
+        Earmark: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - EarmarkTests
+        - EarmarkUITests
+    archive:
+      config: Release
