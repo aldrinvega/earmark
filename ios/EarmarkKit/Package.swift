@@ -1,0 +1,34 @@
+// swift-tools-version: 6.0
+import Foundation
+import PackageDescription
+
+// Same split as Glasswing: the SwiftData `Store` target needs Xcode (its @Model macros ship with Xcode, not with the
+// swift.org toolchain). Local runs on this Mac set EARMARK_NO_SWIFTDATA=1 (ios/test-local.sh); CI builds everything.
+let withSwiftData = ProcessInfo.processInfo.environment["EARMARK_NO_SWIFTDATA"] == nil
+
+var targets: [Target] = [
+    // Value types shared by every module (SentenceID, …). Foundation only.
+    .target(name: "Models"),
+    // Public-domain fixtures and test helpers (never shipped in the app).
+    .target(name: "EarmarkTestSupport", resources: [.copy("Fixtures")]),
+    .testTarget(name: "ModelsTests", dependencies: ["Models", "EarmarkTestSupport"]),
+]
+var products: [Product] = [
+    .library(name: "Models", targets: ["Models"]),
+]
+if withSwiftData {
+    // On-device library store (SPEC-library). Depends on Models only, never on a network client.
+    targets += [
+        .target(name: "Store", dependencies: ["Models"]),
+        .testTarget(name: "StoreTests", dependencies: ["Store"]),
+    ]
+    products += [.library(name: "Store", targets: ["Store"])]
+}
+
+let package = Package(
+    name: "EarmarkKit",
+    platforms: [.iOS("26.0"), .macOS("26.0")],
+    products: products,
+    targets: targets,
+    swiftLanguageModes: [.v6]
+)
