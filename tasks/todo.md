@@ -73,7 +73,7 @@ generate → archive unsigned → zip `Earmark-<sha>.ipa` → upload artifact (1
       `** ARCHIVE SUCCEEDED **`
 - [x] `gh run download <id> -n Earmark-ipa` gives `Earmark-df4b6e9.ipa` (490 KB) with `Payload/Earmark.app`;
       Info.plist: `local.earmark`, display name Earmark, min iOS 26.0, `UIBackgroundModes` audio
-- [ ] Manual check (owner): installs with SideStore and opens on the iPhone SE
+- [x] Manual check (owner): installs with SideStore and opens on the iPhone SE (2026-11-18, `tasks/app-log.md`)
 
 **Dependencies:** Task 2
 
@@ -82,8 +82,8 @@ generate → archive unsigned → zip `Earmark-<sha>.ipa` → upload artifact (1
 **Estimated scope:** Small
 
 ### Checkpoint A — blank app on the phone
-- [ ] Owner installed `Earmark-<sha>.ipa` and it opened (noted in `tasks/app-log.md`)
-- [ ] Local and CI tests green
+- [x] Owner installed `Earmark-<sha>.ipa` and it opened (noted in `tasks/app-log.md`)
+- [x] Local and CI tests green
 
 ## Phase 1 — Read-along spike
 
