@@ -161,12 +161,25 @@ dashes in 19th-century text.
 sentence in the clip.
 
 **Acceptance criteria:**
-- [ ] Fixture files are public domain, with their source and licence in `EarmarkTestSupport/Fixtures/README.md`
-- [ ] `expected-starts.json` covers every sentence in the clip, IDs from Task 5
+- [x] Fixture files are public domain, with their source and licence in `EarmarkTestSupport/Fixtures/README.md`
+      (owner OK'd the download 2026-11-18; Gutenberg #1342 via the PGLAF mirror; LibriVox version 4, Elizabeth Klett)
+- [ ] ~~`expected-starts.json` covers every sentence in the clip~~ **Changed:** `pp-ch3-expected-starts.json` lists the
+      **8** of ~21 sentence starts that can be trusted without listening (long pause + steady 2.7–3.7 words/s between
+      neighbours). This narrator pauses as long at commas as at full stops, so a pause-only fit was wrong inside
+      paragraphs (5–8 words/s); those starts are left out rather than guessed. The Task 8 GO metric uses these 8.
 
-**Verification:**
-- [ ] Tests pass: a fixture-loading test in `ios/test-local.sh`
-- [ ] Manual check: spot-check 5 start times by listening
+**Verification:** (2026-11-18)
+- [x] Tests pass: `ChapterFixtureTests` (84 sentences, no edition artefacts, 8 starts are real IDs in order, clip is an
+      MP4) — full `ios/test-local.sh`: 35 ReadAlongCore + 6 SentenceID + 54 EPUBCore tests
+- [ ] Manual check (owner): listen to `pp-ch3-clip.m4a` at 0:14.9 "NOT all that Mrs. Bennet", 1:04.8 "If I can but
+      see", 1:39.9 "An invitation to dinner", 2:12.4 "Lady Lucas quieted her fears", 2:47.5 "Mr. Bingley was
+      good-looking" — each should start within ½ s.
+- Fixed on the way: `Fixtures.url` looked in the bundle root; on macOS resources are in `Contents/Resources`.
+
+**Follow-ups found while preparing the fixture (EPUBCore, real-EPUB markup):**
+- [ ] Drop-cap images (`<img alt="N"/>` + "OT all…") should contribute their `alt` letter without a space.
+- [ ] Page-number markers (`<span class="pagenum">`, `epub:type="pagebreak"`) must be skipped, not read as text.
+- [ ] Illustration captions inside the text flow, and paragraphs split around an illustration.
 
 **Dependencies:** Task 5
 

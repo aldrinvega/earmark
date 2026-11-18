@@ -12,7 +12,9 @@ public enum Fixtures {
     }
 
     public static func url(_ name: String) throws -> URL {
-        let url = Bundle.module.bundleURL.appending(path: "Fixtures").appending(path: name)
+        // Ask the bundle for the copied folder: on macOS it sits in Contents/Resources, on iOS at the bundle root.
+        guard let folder = Bundle.module.url(forResource: "Fixtures", withExtension: nil) else { throw Missing.file(name) }
+        let url = folder.appending(path: name)
         guard FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) else { throw Missing.file(name) }
         return url
     }

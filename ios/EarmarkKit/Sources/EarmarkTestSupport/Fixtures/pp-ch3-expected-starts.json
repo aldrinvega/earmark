@@ -1,0 +1,48 @@
+{
+  "clip": "pp-ch3-clip.m4a",
+  "chapter": "pp-ch3.xhtml",
+  "method": "Not hand-checked. Each start is the end of a pause >= 0.45 s (10 ms RMS envelope, -44 dBFS) that also keeps the narration between the neighbouring trusted starts at a steady 2.7-3.7 words per second. Only boundaries passing both checks are listed; the other sentences in the clip are omitted on purpose (this narrator pauses as long at commas as at full stops). The LibriVox preamble ends at 14.9 s.",
+  "toleranceSeconds": 0.5,
+  "starts": [
+    {
+      "id": "0.1.0",
+      "start": 14.9,
+      "pauseBefore": 1.39
+    },
+    {
+      "id": "0.2.0",
+      "start": 64.81,
+      "pauseBefore": 0.81
+    },
+    {
+      "id": "0.3.0",
+      "start": 76.64,
+      "pauseBefore": 0.45
+    },
+    {
+      "id": "0.3.1",
+      "start": 83.71,
+      "pauseBefore": 0.5
+    },
+    {
+      "id": "0.3.2",
+      "start": 91.04,
+      "pauseBefore": 0.52
+    },
+    {
+      "id": "0.4.0",
+      "start": 99.9,
+      "pauseBefore": 0.63
+    },
+    {
+      "id": "0.4.4",
+      "start": 132.42,
+      "pauseBefore": 0.46
+    },
+    {
+      "id": "0.5.0",
+      "start": 167.48,
+      "pauseBefore": 0.52
+    }
+  ]
+}
