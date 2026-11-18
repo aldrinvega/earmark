@@ -215,13 +215,18 @@ transcriber and the aligner, then shows: engine used, processing seconds per aud
 of `expected-starts.json`, and a play button that highlights the text live. The owner runs it on the iPhone SE.
 
 **Acceptance criteria:**
-- [ ] The screen shows all four numbers for each available engine, and never hangs (cancel button, timeout)
-- [ ] Live playback highlights the current sentence from the computed `AlignmentMap`
-- [ ] Results are recorded in `tasks/spike-log.md`
+- [x] The screen shows all four numbers for each available engine, and never hangs (cancel button, timeout)
+      — `AlignTestModel` tests: perfect engine GO, failing engine doesn't stop the next, drift scored, cancel, timeout
+- [x] Live playback highlights the current sentence from the computed `AlignmentMap` (best engine's map)
+- [ ] Results are recorded in `tasks/spike-log.md` — waiting for the owner's run
 
-**Verification:**
-- [ ] UI smoke on CI: the Diagnostics screen opens in the simulator
+**Verification:** (2026-11-18, CI run 44234656826 at a8678af: 103 package tests, UI tests, archive all green)
+- [x] UI smoke on CI: the Diagnostics screen opens in the simulator (`DiagnosticsSmokeTests`)
+- [x] `Earmark-a8678af.ipa` bundles the Fixtures folder and the speech-permission text
 - [ ] Manual check (owner): the run on the phone, numbers copied into the log
+
+**Follow-up:** the heading "Chapter III." normalises to "chapter iii" while narrators say "chapter three"; the
+unmatched "three" can pull the next sentence's start ~0.4 s early. Add Roman-numeral headings to TextNormalizer.
 
 **Dependencies:** Tasks 6, 7
 
