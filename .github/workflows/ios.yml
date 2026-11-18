@@ -1,0 +1,94 @@
+name: iOS
+
+# macOS minutes are the scarce ones (free plan), so this only runs when iOS code changes.
+on:
+  push:
+    branches: [main]
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  pull_request:
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # SPEC.md "Testing Strategy": package tests, SwiftData Store included (no EARMARK_NO_SWIFTDATA here).
+  test:
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 26
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app || sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | tail -1)"
+          xcodebuild -version
+          swift --version
+      - name: Test EarmarkKit (all targets, incl. SwiftData Store)
+        run: swift test --package-path ios/EarmarkKit
+
+  # SPEC.md: build the app without signing and publish an .ipa for SideStore.
+  app:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 26
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app || sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | tail -1)"
+          xcodebuild -version
+      - name: Generate Xcode project (XcodeGen, CI only)
+        run: |
+          brew install xcodegen
+          xcodegen --version
+          xcodegen generate --spec ios/project.yml
+      - name: Make sure an iPhone SE (3rd generation) simulator exists
+        run: |
+          set -euo pipefail
+          if ! xcrun simctl list devices available | grep -qF "iPhone SE (3rd generation) ("; then
+            RUNTIME=$(xcrun simctl list runtimes -j | ruby -rjson -e '
+              runtimes = JSON.parse(STDIN.read)["runtimes"]
+                .select { |r| r["isAvailable"] && r["platform"] == "iOS" }
+              newest = runtimes.max_by { |r| r["version"].split(".").map(&:to_i) }
+              abort "No iOS simulator runtime installed" unless newest
+              print newest["identifier"]
+            ')
+            echo "Creating an iPhone SE (3rd generation) simulator on $RUNTIME"
+            xcrun simctl create "iPhone SE (3rd generation)" \
+              "com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation" "$RUNTIME"
+          fi
+          xcrun simctl list devices available | grep -F "iPhone SE (3rd generation)"
+      - name: Test on the iPhone SE (3rd generation) simulator
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project ios/Earmark.xcodeproj -scheme Earmark \
+            -destination 'platform=iOS Simulator,name=iPhone SE (3rd generation)' \
+            | tail -n 80
+      - name: Archive (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project ios/Earmark.xcodeproj -scheme Earmark -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Earmark.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            | tail -n 40
+      - name: Package .ipa
+        id: ipa
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          cd "$RUNNER_TEMP"
+          mkdir -p Payload
+          cp -R Earmark.xcarchive/Products/Applications/Earmark.app Payload/
+          zip -qry "Earmark-$SHA.ipa" Payload
+          ls -la "Earmark-$SHA.ipa"
+          unzip -l "Earmark-$SHA.ipa" | grep -E "Earmark.app/(Earmark|Info.plist)$"
+          echo "path=$RUNNER_TEMP/Earmark-$SHA.ipa" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Earmark-ipa
+          path: ${{ steps.ipa.outputs.path }}
+          retention-days: 14
+          if-no-files-found: error
