@@ -127,12 +127,25 @@ punctuation, curly quotes, numbers), match with gaps allowed, re-anchor on long 
 dashes in 19th-century text.
 
 **Acceptance criteria:**
-- [ ] The same input always gives the same IDs (checked twice in one test run)
-- [ ] "Mr. Bennet" and "Mrs. Bennet" don't split sentences; dialogue in quotes stays with its sentence
-- [ ] Output text matches the source characters (only whitespace normalised), so the reader can find each sentence
+- [x] The same input always gives the same IDs (checked twice in one test run) — plus a golden test pinning the
+      exact 9 IDs and texts of the P&P excerpt; tokenizer language pinned to English
+- [x] "Mr. Bennet" and "Mrs. Bennet" don't split sentences; dialogue in quotes stays with its sentence
+- [x] Output text matches the source characters (only whitespace normalised), so the reader can find each sentence
+      (UTF-16 ranges, tested with emoji and combining marks)
 
-**Verification:**
-- [ ] Tests pass: `ios/test-local.sh --filter EPUBCoreTests`
+**Verification:** (2026-11-18)
+- [x] Tests pass: `ios/test-local.sh` — 51 EPUBCore tests in 7 suites (+ 26 ReadAlongCore, 6 SentenceID)
+- [x] Crew review: review-7 NO-GO (10 findings: abbreviation false joins, noterefs, ID stability, soft hyphens/ZWSP,
+      inline elements, ruby, straight quotes, CDATA, UTF-16 tests, error position) → fixed → review-9 NO-GO (word-count
+      gate split "St. James's", initials, ellipsis, noteref ate words, weak test) → fixed → review-11 **GO**.
+
+**Follow-ups (non-blocking, from review-11):**
+- [ ] Add titles (mr, mrs, ms, dr, prof, miss, sir, lady, lord, capt, col, gen) to the sentence-opener stoplist so
+      "…Baker St. Mrs. Hudson opened the door." splits; test it; document that "…St. Holmes was waiting." (a proper
+      noun after a sentence-final St.) stays one sentence by design.
+- [ ] Noteref markers: accept only valid Roman numerals as letter markers (keep "civil"/"vivid"), allow `1a`/`n1`.
+- [ ] A kept (non-marker) noteref loses its inner spaces (`the<a …> house </a>early` → `thehouseearly`): append the
+      raw buffer.
 
 **Dependencies:** Task 1
 

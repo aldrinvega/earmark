@@ -11,14 +11,18 @@ var targets: [Target] = [
     .target(name: "Models"),
     // Text ↔ audio alignment on value types: normaliser, aligner, AlignmentMap. No Speech/AVFoundation.
     .target(name: "ReadAlongCore", dependencies: ["Models"]),
+    // One XHTML chapter → paragraphs → sentences with stable IDs, the input the aligner consumes. Foundation only.
+    .target(name: "EPUBCore", dependencies: ["Models", "ReadAlongCore"]),
     // Public-domain fixtures and test helpers (never shipped in the app).
     .target(name: "EarmarkTestSupport", resources: [.copy("Fixtures")]),
     .testTarget(name: "ModelsTests", dependencies: ["Models", "EarmarkTestSupport"]),
     .testTarget(name: "ReadAlongCoreTests", dependencies: ["ReadAlongCore", "Models"]),
+    .testTarget(name: "EPUBCoreTests", dependencies: ["EPUBCore", "Models", "ReadAlongCore"]),
 ]
 var products: [Product] = [
     .library(name: "Models", targets: ["Models"]),
     .library(name: "ReadAlongCore", targets: ["ReadAlongCore"]),
+    .library(name: "EPUBCore", targets: ["EPUBCore"]),
 ]
 if withSwiftData {
     // On-device library store (SPEC-library). Depends on Models only, never on a network client.
