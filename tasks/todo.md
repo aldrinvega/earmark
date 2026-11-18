@@ -62,12 +62,17 @@ generate → archive unsigned → zip `Earmark-<sha>.ipa` → upload artifact (1
 2026-11-18: private macOS minutes on the free plan were used up; public repos build free.)
 
 **Acceptance criteria:**
-- [ ] A push to `main` produces a green run and an `Earmark-ipa` artifact
-- [ ] The repo is public, and no secrets, certificates, private hostnames or ports are in it or in the logs
+- [x] A push to `main` produces a green run and an `Earmark-ipa` artifact
+- [x] The repo is public, and no secrets, certificates, private hostnames or ports are in it or in the logs
+      (scanned before the first push; older commits still contain internal tailnet-only port numbers)
 
-**Verification:**
-- [ ] `gh run list --workflow ios.yml --limit 1` shows success
-- [ ] `gh run download <id> -n Earmark-ipa` gives a zip with `Payload/Earmark.app`
+**Verification:** (2026-11-18, run 44211392526 at df4b6e9, first try)
+- [x] `gh run list --workflow ios.yml --limit 1` shows success — jobs `test` and `app` green
+- [x] Package tests on CI: 7 tests in 2 suites incl. the SwiftData `StoreSchemaTests`
+- [x] iPhone SE (3rd gen) simulator created on iOS 26.5; `LaunchSmokeTests` passed; `** TEST SUCCEEDED **`,
+      `** ARCHIVE SUCCEEDED **`
+- [x] `gh run download <id> -n Earmark-ipa` gives `Earmark-df4b6e9.ipa` (490 KB) with `Payload/Earmark.app`;
+      Info.plist: `local.earmark`, display name Earmark, min iOS 26.0, `UIBackgroundModes` audio
 - [ ] Manual check (owner): installs with SideStore and opens on the iPhone SE
 
 **Dependencies:** Task 2
