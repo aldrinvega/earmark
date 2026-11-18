@@ -30,6 +30,8 @@ targets:
         product: Models
       - package: EarmarkKit
         product: Store
+      - package: EarmarkKit
+        product: ReadAlongCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: local.earmark
@@ -38,6 +40,8 @@ targets:
         # Keys with no INFOPLIST_KEY_ setting (UIBackgroundModes: audio) live here and are merged in.
         INFOPLIST_FILE: Support/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Earmark
+        # Task 7: both speech engines run on device only (SPEC.md Tech Stack, Alignment).
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: "Earmark lines up the narration with the book's text on this iPhone. Audio never leaves the device."
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
