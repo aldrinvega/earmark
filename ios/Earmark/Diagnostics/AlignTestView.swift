@@ -5,6 +5,7 @@ import SwiftUI
 struct AlignTestView: View {
     @State private var model = DiagnosticsBundle.makeModel()
     @State private var player = ClipPlayer(url: DiagnosticsBundle.clipURL)
+    @State private var copied = false
 
     var body: some View {
         List {
@@ -41,6 +42,19 @@ struct AlignTestView: View {
                         .font(.title.weight(.bold))
                         .foregroundStyle(verdict == .go ? .green : .orange)
                         .accessibilityIdentifier("align-verdict")
+                }
+            }
+
+            if model.runs.contains(where: { $0.state != .waiting && $0.state != .running }) {
+                Section {
+                    Button(copied ? "Copied" : "Copy full report") {
+                        UIPasteboard.general.string = model.report()
+                        copied = true
+                    }
+                    .accessibilityIdentifier("align-copy-report")
+                } footer: {
+                    Text("Every number, every reference start and every word each engine heard, with times. Paste it "
+                         + "into the chat with Claude.")
                 }
             }
 
@@ -90,6 +104,18 @@ private struct EngineRunRows: View {
                                              score.fraction * 100))
                 if let worst = score.worstError {
                     LabeledContent("Worst error", value: String(format: "%.2f s", worst))
+                }
+                ForEach(score.details, id: \.id) { check in
+                    HStack {
+                        Text(check.id.description).font(.caption.monospaced())
+                        Spacer()
+                        Text(String(format: "%.2f → ", check.expected)
+                             + (check.measured.map { String(format: "%.2f", $0) } ?? "unaligned"))
+                            .font(.caption.monospacedDigit())
+                        Image(systemName: check.isWithinTolerance ? "checkmark" : "xmark")
+                            .foregroundStyle(check.isWithinTolerance ? .green : .orange)
+                            .accessibilityLabel(check.isWithinTolerance ? "within 0.5 seconds" : "missed")
+                    }
                 }
             }
             if let verdict = run.verdict {

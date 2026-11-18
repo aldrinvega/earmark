@@ -24,3 +24,20 @@ Screen verdict: NO-GO. **Not accepted as the spike result**, because both number
 3. Diagnostics now shows the first words each engine heard, so a cut-off like this is visible immediately.
 
 Decision: fix and re-run (run 2) before any GO / NO-GO call.
+
+## Run 2 — 2026-11-18, iPhone SE (3rd gen), build `d5e7634` — both engines work; verdict pending detail
+
+| Engine | Words | Heard | s per audio min | Starts within 0.5 s | Worst error |
+|---|---|---|---|---|---|
+| SpeechAnalyzer (iOS 26, on-device) | 509 | 0.1–180.0 s | **1.4** | 7 of 8 (87.5%) | 4.34 s |
+| SFSpeechRecognizer (on-device, buffer-fed) | 508 | 0.2–179.9 s | **2.3** | 7 of 8 (87.5%) | 1.30 s |
+
+- Run-1 fixes confirmed: the buffer-fed legacy recognizer heard the whole clip; SpeechAnalyzer runs on the A15 with
+  the model installed (no download error).
+- Speed is far inside the limit (≤ 30 s per audio minute): ~20× margin. The phone was not reported as getting warm.
+- Live highlight followed the narration (38.7 s → 0.1.1 "They attacked him…", consistent with the speaking rate).
+- Screen verdict NO-GO only because 7/8 = 87.5% < 90%. With 8 reference points one miss decides it, and both engines
+  missed exactly one. Suspect: the reference itself — `0.1.0` = 14.90 s may be the start of a spoken "Chapter Three"
+  heading after the preamble, not of "NOT all that…" (SFSpeechRecognizer's worst error, 1.30 s, fits that).
+- Next: Diagnostics shows expected vs measured per reference and copies a full report (all heard words with times),
+  so the miss can be attributed (reference vs aligner) before the GO / NO-GO call.

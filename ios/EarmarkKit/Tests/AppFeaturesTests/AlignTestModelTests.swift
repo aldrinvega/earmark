@@ -75,6 +75,39 @@ import ReadAlongCore
         #expect(model.overallVerdict == .go)
     }
 
+    @Test func eachReferenceStartIsReportedWithItsMeasuredTimeAndError() async {
+        let late = Self.words(startingAt: 4.0)
+        let model = model([NamedTranscriber(name: "Late", transcriber: StubTranscriber(.words(late)))])
+        await model.run()
+        let details = model.runs[0].score?.details ?? []
+        #expect(details.map(\.id.description) == ["0.1.0", "0.1.1", "0.2.0"])
+        #expect(details.map(\.expected) == [2.8, 4.8, 8.0])
+        // "her" is word 2, "sir" word 7, "nothing" word 14, each 0.4 s apart from 4.0 s.
+        let measured = details.compactMap(\.measured)
+        #expect(zip(measured, [4.8, 6.8, 9.6]).allSatisfy { abs($0 - $1) < 0.0001 })
+        #expect(details.map(\.error) == [2.0, 2.0, 1.6])
+        #expect(details.allSatisfy { !$0.isWithinTolerance })
+    }
+
+    @Test func theReportHasEveryNumberEveryReferenceAndEveryHeardWord() async {
+        let model = model([
+            NamedTranscriber(name: "Broken", transcriber: StubTranscriber(.error(.unavailableOnDevice))),
+            NamedTranscriber(name: "Fake", transcriber: StubTranscriber(.words(Self.words()))),
+        ])
+        await model.run()
+        let report = model.report()
+        #expect(report.contains("== Broken"))
+        #expect(report.contains("failed: \(TranscriptionError.unavailableOnDevice.localizedDescription)"))
+        #expect(report.contains("== Fake"))
+        #expect(report.contains("words 19, heard 2.00-9.50 s"))
+        #expect(report.contains("starts within 0.5 s: 3/3"))
+        #expect(report.contains("ref 0.1.1 expected 4.80 measured 4.80 error 0.00 ok"))
+        // One line per heard word: start, end, text.
+        #expect(report.contains("2.00\t2.30\tchapter"))
+        #expect(report.contains("9.20\t9.50\tdelightful"))
+        #expect(report.contains("verdict GO"))
+    }
+
     @Test func aSlowEngineIsANoGoEvenWhenAccurate() {
         let verdict = SpikeVerdict(fraction: 1, secondsPerAudioMinute: 45)
         #expect(verdict == .noGo(reasons: ["45.0 s of processing per audio minute (limit 30)"]))

@@ -80,6 +80,48 @@ public final class AlignTestModel {
         await task?.value
     }
 
+    /// A plain-text report of the whole run — every number, every reference start and every heard word with its
+    /// times — for the owner to paste off the phone (tasks/spike-log.md).
+    public func report() -> String {
+        var lines = ["Earmark read-along spike report", "audio \(String(format: "%.1f", audioDuration)) s, "
+            + "sentences \(sentences.count)"]
+        for run in runs {
+            lines.append("")
+            lines.append("== \(run.id)")
+            switch run.state {
+            case .waiting: lines.append("waiting")
+            case .running: lines.append("running")
+            case .cancelled: lines.append("cancelled")
+            case .failed(let message): lines.append("failed: \(message)")
+            case .finished:
+                lines.append(String(format: "words %d, heard %.2f-%.2f s", run.words ?? 0, run.heardFrom ?? 0,
+                                    run.heardUntil ?? 0))
+                lines.append(String(format: "seconds per audio minute %.2f, processing %.2f s",
+                                    run.secondsPerAudioMinute ?? 0, run.processingSeconds ?? 0))
+                if let score = run.score {
+                    lines.append("starts within 0.5 s: \(score.withinTolerance)/\(score.checked)")
+                    for check in score.details {
+                        let measured = check.measured.map { String(format: "%.2f", $0) } ?? "unaligned"
+                        let error = check.error.map { String(format: "%.2f", $0) } ?? "-"
+                        lines.append("ref \(check.id) expected \(String(format: "%.2f", check.expected)) measured "
+                            + "\(measured) error \(error) \(check.isWithinTolerance ? "ok" : "MISS")")
+                    }
+                }
+                if let verdict = run.verdict {
+                    switch verdict {
+                    case .go: lines.append("verdict GO")
+                    case .noGo(let reasons): lines.append("verdict NO-GO: " + reasons.joined(separator: "; "))
+                    }
+                }
+                lines.append("-- words (start, end, text)")
+                for word in run.transcript ?? [] {
+                    lines.append(String(format: "%.2f\t%.2f\t", word.start, word.end) + word.text)
+                }
+            }
+        }
+        return lines.joined(separator: "\n")
+    }
+
     /// The sentence being read at `time`, from the best-scoring engine's alignment (for live playback).
     public func sentence(at time: TimeInterval) -> SentenceText? {
         guard let id = bestMap?.sentence(at: time) else { return nil }
@@ -109,6 +151,7 @@ public final class AlignTestModel {
                 runs[index].preview = result.words.prefix(14).map(\.text).joined(separator: " ")
                 runs[index].heardFrom = result.words.first?.start
                 runs[index].heardUntil = result.words.last?.end
+                runs[index].transcript = result.words
                 runs[index].processingSeconds = result.seconds
                 runs[index].secondsPerAudioMinute = perMinute
                 runs[index].score = score

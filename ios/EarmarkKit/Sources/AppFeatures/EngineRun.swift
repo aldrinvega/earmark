@@ -1,4 +1,5 @@
 import Foundation
+import ReadAlongCore
 
 /// One speech engine's run on the Diagnostics test chapter.
 public struct EngineRun: Identifiable, Sendable, Equatable {
@@ -20,6 +21,8 @@ public struct EngineRun: Identifiable, Sendable, Equatable {
     /// Start of the first and end of the last heard word, in seconds of the clip.
     public var heardFrom: Double?
     public var heardUntil: Double?
+    /// Every word heard with its times, for the copied report (to check alignment and the references off the phone).
+    public var transcript: [TranscriptWord]?
     /// Wall-clock time for speech-to-text plus alignment.
     public var processingSeconds: Double?
     public var secondsPerAudioMinute: Double?
