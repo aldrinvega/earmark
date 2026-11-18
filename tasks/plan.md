@@ -89,5 +89,5 @@ Phase 7  Downloads           offline audio + EPUB, storage, Wi-Fi only, Mac-off 
 1. **Fixture chapter.** Proposed: *Pride and Prejudice* chapter 3, audio from LibriVox and text from Project
    Gutenberg (both public domain), trimmed to about 3 minutes (~2 MB) and bundled in the app only for Diagnostics.
    I'll ask before downloading anything (file, source, size).
-2. **GitHub repo.** Task 3 creates the private `aldrinvega/earmark` repo and pushes. I'll confirm with you right
-   before that step.
+2. **GitHub repo.** Resolved 2026-11-18: `aldrinvega/earmark` is **public**, because the free plan's private
+   macOS minutes ran out and public repos build free.

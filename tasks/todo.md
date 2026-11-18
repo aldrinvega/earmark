@@ -54,15 +54,16 @@ Also added: `ios/tools/make-icon.swift` (regenerates the placeholder icon), `Ear
 
 **Estimated scope:** Small
 
-## Task 3: CI workflow, private GitHub repo, first `.ipa`
+## Task 3: CI workflow, public GitHub repo, first `.ipa`
 
 **Description:** Add `.github/workflows/ios.yml` with two jobs, copied from Glasswing's: package tests, and
 generate → archive unsigned → zip `Earmark-<sha>.ipa` → upload artifact (14 days). Runs only on `ios/**` changes.
-**Confirm with the owner, then** create the private repo `aldrinvega/earmark` and push.
+**Confirm with the owner, then** create the repo `aldrinvega/earmark` and push. (Owner chose **public** on
+2026-11-18: private macOS minutes on the free plan were used up; public repos build free.)
 
 **Acceptance criteria:**
 - [ ] A push to `main` produces a green run and an `Earmark-ipa` artifact
-- [ ] The repo is private, and no secrets or certificates are in it or in the logs
+- [ ] The repo is public, and no secrets, certificates, private hostnames or ports are in it or in the logs
 
 **Verification:**
 - [ ] `gh run list --workflow ios.yml --limit 1` shows success

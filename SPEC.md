@@ -18,8 +18,8 @@ Everything comes from the owner's Mac over the tailnet:
 
 | Service on the Mac | Tailnet address (already served) | Gives the app |
 |---|---|---|
-| Audiobookshelf 2.37.2 (`127.0.0.1:13378`) | `https://<mac>.ts.net:8443` | audiobooks, covers, chapters, listening progress, bookmarks |
-| Pocket Book Studio (`127.0.0.1:8765`) | `https://<mac>.ts.net:8765` | EPUB list (`GET /api/books`), original EPUBs (`GET /source/<id>`), upload (`POST /api/upload`) |
+| Audiobookshelf 2.37.2 | `https://<mac>.ts.net:<port>` | audiobooks, covers, chapters, listening progress, bookmarks |
+| Pocket Book Studio | `https://<mac>.ts.net:<port>` | EPUB list (`GET /api/books`), original EPUBs (`GET /source/<id>`), upload (`POST /api/upload`) |
 
 **User:** one person (the owner), on an **iPhone SE (3rd generation), iOS 27** (375×667 pt, Home button), with the
 Mac on the same tailnet.
@@ -79,7 +79,7 @@ contract: stack, commands, structure, style, tests, boundaries.
 | Alignment | `Speech` on device (`SpeechAnalyzer`/`SpeechTranscriber` on iOS 26+, falling back to `SFSpeechRecognizer` with `requiresOnDeviceRecognition`) for word timestamps, then sequence alignment against the EPUB text. **Spike first** (Open Question 2) |
 | Recap | v1 has no AI: the last passage heard before stopping + people found with `NLTagger(.nameType)` up to that point. Apple's on-device Foundation Models need Apple Intelligence, which the iPhone SE (3rd gen) doesn't have (Open Question 3) |
 | Images | `AsyncImage` + on-disk `URLCache` for covers |
-| Transport | HTTPS over Tailscale (existing `tailscale serve` entries 8443 and 8765), JSON; Audiobookshelf bearer token in the Keychain |
+| Transport | HTTPS over Tailscale (the owner's existing `tailscale serve` entries), JSON; Audiobookshelf bearer token in the Keychain |
 | Project generation | Committed `ios/project.yml` → **XcodeGen on CI only** (same as Glasswing; no Xcode on the Mac) |
 | Distribution | Unsigned `.ipa` from CI → signed and installed with **SideStore** using the owner's Apple ID |
 
@@ -117,7 +117,7 @@ ios/smoke-servers.sh                                # Audiobookshelf /status + l
 ## Project Structure
 
 ```
-~/Projects/earmark/                    (private GitHub repo aldrinvega/earmark — create only after approval)
+~/Projects/earmark/                    (public GitHub repo aldrinvega/earmark)
 ├── SPEC.md                            → this file (capability map = index of module specs)
 ├── SPEC-<module-id>.md                → one per module, written before that module is built
 ├── docs/
@@ -233,9 +233,10 @@ UI code is covered by the smoke path instead of a percentage. Stub-server code i
   changing a client; run `ios/test-local.sh` before every commit; respect Reduce Motion, Reduce Transparency and
   Dynamic Type; fit 375×667; keep downloaded books and the Library usable with the Mac off.
 - **Ask first:** adding any dependency (ZIPFoundation is proposed here); changing anything on the Mac (Audiobookshelf
-  settings, Pocket Book Studio code, `tailscale serve` entries 443/5443/8443/8765/8766/8843); sending book text or
-  audio to any outside service (e.g. a cloud AI for recaps); changing the SwiftData schema after the first install;
-  creating the GitHub repo or making anything public.
+  settings, Pocket Book Studio code, any of the owner's `tailscale serve` entries); sending book text or
+  audio to any outside service (e.g. a cloud AI for recaps); changing the SwiftData schema after the first install.
+  **The repo is public** (owner's decision 2026-11-18, so GitHub-hosted macOS builds are free): anything committed is
+  world-readable, so the "Never" list below is enforced before every push, and server recordings are scrubbed.
 - **Never:** commit tokens, passwords, signing certificates or Apple ID details; put them in the `.ipa` or CI logs;
   commit audiobooks, EPUBs or anything copyrighted (test fixtures are public domain only); expose the Mac beyond the
   tailnet; touch Glasswing or `~/Projects/aniyomi-retro` (reference only); ship to the App Store.
@@ -265,7 +266,8 @@ UI code is covered by the smoke path instead of a percentage. Stub-server code i
 **Settled 2026-11-13 ("approve as is"), using the recommendations below:** name **Earmark**; alignment **on the
 iPhone**, decided for good by the `read-along` spike (Mac fallback only with approval); recap v1 **without AI**;
 **ZIPFoundation** approved as the one new dependency; **automatic title + author matching** with a manual "choose
-ebook" fallback; a **private** `aldrinvega/earmark` repo (confirmed again just before it is created); spec location
+ebook" fallback; a `aldrinvega/earmark` repo — **changed 2026-11-18 to public**, because the free plan's private
+macOS minutes were used up; spec location
 `~/Projects/earmark`.
 
 1. **App name** — keep "Earmark" or pick another? (It sets the bundle id `local.earmark` and the repo name.)
