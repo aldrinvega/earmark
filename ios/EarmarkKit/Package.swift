@@ -9,12 +9,16 @@ let withSwiftData = ProcessInfo.processInfo.environment["EARMARK_NO_SWIFTDATA"] 
 var targets: [Target] = [
     // Value types shared by every module (SentenceID, …). Foundation only.
     .target(name: "Models"),
+    // Text ↔ audio alignment on value types: normaliser, aligner, AlignmentMap. No Speech/AVFoundation.
+    .target(name: "ReadAlongCore", dependencies: ["Models"]),
     // Public-domain fixtures and test helpers (never shipped in the app).
     .target(name: "EarmarkTestSupport", resources: [.copy("Fixtures")]),
     .testTarget(name: "ModelsTests", dependencies: ["Models", "EarmarkTestSupport"]),
+    .testTarget(name: "ReadAlongCoreTests", dependencies: ["ReadAlongCore", "Models"]),
 ]
 var products: [Product] = [
     .library(name: "Models", targets: ["Models"]),
+    .library(name: "ReadAlongCore", targets: ["ReadAlongCore"]),
 ]
 if withSwiftData {
     // On-device library store (SPEC-library). Depends on Models only, never on a network client.

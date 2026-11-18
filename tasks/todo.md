@@ -95,12 +95,23 @@ punctuation, curly quotes, numbers), match with gaps allowed, re-anchor on long 
 `sentence(at:)` and `startTime(of:)`.
 
 **Acceptance criteria:**
-- [ ] Perfect transcript → every sentence start exact
-- [ ] Noisy transcript (10% words substituted, 5% dropped, an extra intro sentence) → ≥95% of starts within 0.5 s
-- [ ] A missing paragraph in the audio is marked unaligned without shifting the sentences after it
+- [x] Perfect transcript → every sentence start exact
+- [x] Noisy transcript (10% words substituted, 5% dropped, an extra intro sentence) → ≥95% of starts within 0.5 s
+      — made stricter: 200 sentences, ±0.2 s jitter, paraphrase, 4 seeds → 97.5 / 97.5 / 99.5 / 97.5 %
+- [x] A missing paragraph in the audio is marked unaligned without shifting the sentences after it
 
-**Verification:**
-- [ ] Tests pass: `ios/test-local.sh --filter ReadAlongCoreTests`
+**Verification:** (2026-11-18)
+- [x] Tests pass: `ios/test-local.sh` — 26 ReadAlongCore tests in 6 suites + 6 SentenceID tests
+- [x] Crew review: review-4 NO-GO (crash on overlapping anchors, lucky-seed test, untested fallback, start-only
+      lookup, spellings) → fixed → review-5 NO-GO (band regression after long insertion, whitespace merges, years)
+      → fixed → review-6 **GO**. Fuzz: 623 seeded runs, no crash. 10k words: 0.13 s anchored, 2.5 s worst fallback.
+
+**Follow-ups (non-blocking, from review-6) — do before relying on the no-anchor fallback:**
+- [ ] Fallback band is capped at ~50M cells (~55 MB peak). On a repetitive chapter with no unique 4-grams, a long
+      insertion near the start (or > ~5,000 words) loses accuracy (e.g. 490/600 exact). Fix: split full unanchored
+      segments recursively (Hirschberg / book midpoint); add insertion-at-start/end and 6,000-word tests.
+- [ ] Book `to-day` vs transcript words `to`, `day` starts 0.4 s late: group adjacent transcript words into one
+      token when the book has a merged hyphen token; add the cross test.
 
 **Dependencies:** Task 1
 
