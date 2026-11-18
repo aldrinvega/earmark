@@ -27,9 +27,14 @@ jobs:
           swift --version
       - name: Test EarmarkKit (all targets, incl. SwiftData Store)
         run: swift test --package-path ios/EarmarkKit
-      # Debug timings are not the yardstick (the app ships Release); assert the 5 s bound only on an optimised build.
-      - name: Test aligner performance (release, EARMARK_PERF=1)
-        run: EARMARK_PERF=1 swift test -c release --package-path ios/EarmarkKit --filter AlignerPerformanceTests
+      # Debug timings are not the yardstick (the app ships Release). A Release run always asserts the bound; the
+      # evidence checks below turn the step red if the filter stops matching (a renamed suite exits 0 otherwise).
+      - name: Test aligner performance (release, timing asserted)
+        run: |
+          set -o pipefail
+          EARMARK_PERF=1 swift test -c release --package-path ios/EarmarkKit --filter AlignerPerformanceTests \
+            2>&1 | tee perf.log
+          grep -q "(release, timing asserted)" perf.log
 
   # SPEC.md: build the app without signing and publish an .ipa for SideStore.
   app:

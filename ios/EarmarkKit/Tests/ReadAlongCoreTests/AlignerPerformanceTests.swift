@@ -5,12 +5,17 @@ import Models
 
 /// A long chapter must not fall back to a 10k × 10k matrix: anchors keep the dynamic-programming segments small.
 ///
-/// The timing bounds are only meaningful in an optimised build (the app ships Release). Debug `swift test` keeps every
-/// correctness assertion but only prints the timings; set `EARMARK_PERF=1` to assert them, and CI does that in a
-/// `-c release` run of this suite. `.serialized` keeps the two big DP runs from overlapping.
+/// The timing bounds are only meaningful in an optimised build (the app ships Release). A Release `swift test` always
+/// asserts them; a Debug run keeps every correctness assertion but only asserts timing when `EARMARK_PERF=1` is set
+/// (CI runs the release step, so the gate cannot silently disappear). `.serialized` keeps the two big DP runs from
+/// overlapping.
 @Suite(.serialized) struct AlignerPerformanceTests {
     private static var enforcesTiming: Bool {
+        #if DEBUG
         ProcessInfo.processInfo.environment["EARMARK_PERF"] == "1"
+        #else
+        true
+        #endif
     }
 
     private static var configuration: String {
@@ -21,7 +26,7 @@ import Models
         #endif
     }
 
-    /// Prints every measurement; asserts the 5 s bound only when `EARMARK_PERF=1`.
+    /// Prints every measurement; asserts the 5 s bound in Release, and in Debug only with `EARMARK_PERF=1`.
     private func report(_ elapsed: Duration, seconds: Double, label: String) {
         let timing = Self.enforcesTiming
             ? "timing asserted"
