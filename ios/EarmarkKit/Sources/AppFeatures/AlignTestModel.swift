@@ -105,7 +105,10 @@ public final class AlignTestModel {
                 )
                 let score = AlignmentScore(map: result.map, expected: expected)
                 let perMinute = result.seconds / max(audioDuration, 1) * 60
-                runs[index].words = result.words
+                runs[index].words = result.words.count
+                runs[index].preview = result.words.prefix(14).map(\.text).joined(separator: " ")
+                runs[index].heardFrom = result.words.first?.start
+                runs[index].heardUntil = result.words.last?.end
                 runs[index].processingSeconds = result.seconds
                 runs[index].secondsPerAudioMinute = perMinute
                 runs[index].score = score
@@ -139,7 +142,7 @@ public final class AlignTestModel {
         audioFile: URL,
         sentences: [SentenceText],
         timeout: Duration
-    ) async throws -> (words: Int, map: AlignmentMap, seconds: Double) {
+    ) async throws -> (words: [TranscriptWord], map: AlignmentMap, seconds: Double) {
         let clock = ContinuousClock()
         let started = clock.now
         let words = try await withThrowingTaskGroup(of: [TranscriptWord].self) { group in
@@ -157,6 +160,6 @@ public final class AlignTestModel {
         let map = Aligner().align(transcript: words, sentences: sentences)
         let elapsed = started.duration(to: clock.now)
         let seconds = Double(elapsed.components.seconds) + Double(elapsed.components.attoseconds) / 1e18
-        return (words.count, map, seconds)
+        return (words, map, seconds)
     }
 }

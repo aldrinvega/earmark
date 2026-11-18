@@ -15,6 +15,11 @@ public struct EngineRun: Identifiable, Sendable, Equatable {
     public var state: State = .waiting
     /// Words the engine heard.
     public var words: Int?
+    /// The first words heard (up to 14), to see at a glance whether the engine heard the book.
+    public var preview: String?
+    /// Start of the first and end of the last heard word, in seconds of the clip.
+    public var heardFrom: Double?
+    public var heardUntil: Double?
     /// Wall-clock time for speech-to-text plus alignment.
     public var processingSeconds: Double?
     public var secondsPerAudioMinute: Double?

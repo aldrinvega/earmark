@@ -40,14 +40,14 @@ struct SpeechAnalyzerTranscriber: Transcribing {
     private func transcribeWithAnalyzer(audioFile: URL) async throws -> [TranscriptWord] {
         // SpeechTranscriber has no network path; if its model is not available there is nothing to fall back to here.
         guard SpeechTranscriber.isAvailable else {
-            throw TranscriptionError.unavailableOnDevice
+            throw TranscriptionError.failed("SpeechTranscriber is not available on this iPhone (isAvailable is false).")
         }
 
         try await SpeechRecognitionAuthorization.ensureAuthorized()
         if Task.isCancelled { throw TranscriptionError.cancelled }
 
         guard let supportedLocale = await SpeechTranscriber.supportedLocale(equivalentTo: locale) else {
-            throw TranscriptionError.unsupportedLocale
+            throw TranscriptionError.failed("SpeechTranscriber has no model for \(locale.identifier) on this iPhone.")
         }
 
         let transcriber = SpeechTranscriber(
@@ -94,20 +94,23 @@ struct SpeechAnalyzerTranscriber: Transcribing {
     /// Downloads the on-device model for this transcriber if it is not installed yet.
     @available(iOS 26.0, *)
     private static func installAssetsIfNeeded(for transcriber: SpeechTranscriber) async throws {
-        switch await AssetInventory.status(forModules: [transcriber]) {
+        let status = await AssetInventory.status(forModules: [transcriber])
+        switch status {
         case .installed:
             return
         case .unsupported:
-            throw TranscriptionError.unavailableOnDevice
+            throw TranscriptionError.failed(
+                "Apple's speech model is not supported on this iPhone (AssetInventory status: unsupported).")
         default:
             // .supported or .downloading: ask for the download (the request may be nil when another process owns it).
             guard let request = try await AssetInventory.assetInstallationRequest(supporting: [transcriber]) else {
-                throw TranscriptionError.unavailableOnDevice
+                throw TranscriptionError.failed(
+                    "The speech model is not installed and iOS returned no download request (status: \(status)).")
             }
             do {
                 try await request.downloadAndInstall()
             } catch {
-                throw TranscriptionError.failed(error.localizedDescription)
+                throw TranscriptionError.failed("Downloading the speech model failed: \(error.localizedDescription)")
             }
         }
     }

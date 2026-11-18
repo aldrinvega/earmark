@@ -74,6 +74,14 @@ private struct EngineRunRows: View {
             Label(message, systemImage: "xmark.octagon").foregroundStyle(.red)
         case .finished:
             LabeledContent("Words heard", value: "\(run.words ?? 0)")
+            if let from = run.heardFrom, let until = run.heardUntil {
+                LabeledContent("Heard from … to", value: String(format: "%.1f s … %.1f s", from, until))
+            }
+            if let preview = run.preview, !preview.isEmpty {
+                Text("“\(preview) …”")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
             LabeledContent("Seconds per audio minute",
                            value: String(format: "%.1f s", run.secondsPerAudioMinute ?? 0))
             if let score = run.score {

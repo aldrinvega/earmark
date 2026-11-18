@@ -48,6 +48,10 @@ import ReadAlongCore
         let run = model.runs[0]
         #expect(run.state == .finished)
         #expect(run.words == 19)
+        // What was heard, and over which part of the clip — a cut-off transcription is obvious from these.
+        #expect(run.preview == "chapter three her report was highly favourable sir william had been delighted with him")
+        #expect(run.heardFrom == 2.0)
+        #expect(run.heardUntil == 9.5)
         #expect(run.score?.checked == 3)
         #expect(run.score?.withinTolerance == 3)
         #expect(run.score?.fraction == 1)
