@@ -1,35 +1,50 @@
 import SwiftUI
 
-/// Placeholder until app-shell (Phase 3): proves the pipeline from CI to the iPhone (Checkpoint A).
+/// Placeholder until app-shell (Phase 3): proves the pipeline from CI to the iPhone (Checkpoint A), and holds the
+/// way into Diagnostics for the read-along spike (Task 8).
 struct RootView: View {
     static let title = "Earmark"
     static let subtitle = "Listen and read in sync"
 
     var body: some View {
-        ZStack {
-            BackdropView()
-            VStack(spacing: 10) {
-                Image(systemName: "headphones")
-                    .symbolRenderingMode(.hierarchical)
-                    .font(.system(size: 40))
-                    .foregroundStyle(.tint)
-                    .accessibilityHidden(true)
-                Text(Self.title)
-                    .font(.largeTitle.weight(.bold))
-                    .accessibilityIdentifier("launch-title")
-                Text(Self.subtitle)
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
-                Text("The pipeline works. Sign-in and your library come next.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 4)
+        NavigationStack {
+            ZStack {
+                BackdropView()
+                VStack(spacing: 18) {
+                    VStack(spacing: 10) {
+                        Image(systemName: "headphones")
+                            .symbolRenderingMode(.hierarchical)
+                            .font(.system(size: 40))
+                            .foregroundStyle(.tint)
+                            .accessibilityHidden(true)
+                        Text(Self.title)
+                            .font(.largeTitle.weight(.bold))
+                            .accessibilityIdentifier("launch-title")
+                        Text(Self.subtitle)
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                        Text("The pipeline works. Sign-in and your library come next.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 4)
+                    }
+                    .padding(28)
+                    .frame(maxWidth: 340)
+                    .glassEffect(.regular, in: .rect(cornerRadius: 32))
+
+                    NavigationLink {
+                        DiagnosticsView()
+                    } label: {
+                        Label("Diagnostics", systemImage: "stethoscope")
+                            .font(.headline)
+                            .padding(.horizontal, 8)
+                    }
+                    .buttonStyle(.glass)
+                    .accessibilityIdentifier("open-diagnostics")
+                }
+                .padding(20)
             }
-            .padding(28)
-            .frame(maxWidth: 340)
-            .glassEffect(.regular, in: .rect(cornerRadius: 32))
-            .padding(20)
         }
     }
 }

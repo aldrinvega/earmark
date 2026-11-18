@@ -25,6 +25,10 @@ targets:
     platform: iOS
     sources:
       - path: Earmark
+      # Task 8: the public-domain test chapter, clip and reference starts, bundled as a "Fixtures" folder.
+      - path: EarmarkKit/Sources/EarmarkTestSupport/Fixtures
+        type: folder
+        buildPhase: resources
     dependencies:
       - package: EarmarkKit
         product: Models
@@ -32,6 +36,10 @@ targets:
         product: Store
       - package: EarmarkKit
         product: ReadAlongCore
+      - package: EarmarkKit
+        product: EPUBCore
+      - package: EarmarkKit
+        product: AppFeatures
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: local.earmark

@@ -13,16 +13,20 @@ var targets: [Target] = [
     .target(name: "ReadAlongCore", dependencies: ["Models"]),
     // One XHTML chapter → paragraphs → sentences with stable IDs, the input the aligner consumes. Foundation only.
     .target(name: "EPUBCore", dependencies: ["Models", "ReadAlongCore"]),
+    // View models and UI logic for the app (Diagnostics first), testable without Xcode. Foundation + Observation only.
+    .target(name: "AppFeatures", dependencies: ["Models", "ReadAlongCore", "EPUBCore"]),
     // Public-domain fixtures and test helpers (never shipped in the app).
     .target(name: "EarmarkTestSupport", resources: [.copy("Fixtures")]),
     .testTarget(name: "ModelsTests", dependencies: ["Models", "EarmarkTestSupport"]),
     .testTarget(name: "ReadAlongCoreTests", dependencies: ["ReadAlongCore", "Models"]),
+    .testTarget(name: "AppFeaturesTests", dependencies: ["AppFeatures", "Models", "ReadAlongCore"]),
     .testTarget(name: "EPUBCoreTests", dependencies: ["EPUBCore", "Models", "ReadAlongCore", "EarmarkTestSupport"]),
 ]
 var products: [Product] = [
     .library(name: "Models", targets: ["Models"]),
     .library(name: "ReadAlongCore", targets: ["ReadAlongCore"]),
     .library(name: "EPUBCore", targets: ["EPUBCore"]),
+    .library(name: "AppFeatures", targets: ["AppFeatures"]),
 ]
 if withSwiftData {
     // On-device library store (SPEC-library). Depends on Models only, never on a network client.
