@@ -37,4 +37,4 @@ with a fake transport; progress conflict rules. Coverage ≥80%. Live check is t
 
 ## Open questions
 1. Dev user and server URL (owner to provide, kept out of the repo).
-2. Exact response shapes on 2.37.2 (record, then fix this spec).
+2. ~~Exact response shapes on 2.37.2~~ recorded in `docs/abs-api.md` (2026-11-25); spec table above still to be reconciled.
