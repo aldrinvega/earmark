@@ -42,7 +42,7 @@ import Models
         #expect(expected.clip == "pp-ch3-clip.m4a")
         #expect(expected.chapter == "pp-ch3.xhtml")
         #expect(expected.toleranceSeconds == 0.5)
-        #expect(expected.starts.count == 8)
+        #expect(expected.starts.count == 20)
 
         let ids = Set(try sentences().map(\.sentence.id))
         for start in expected.starts {

@@ -41,3 +41,20 @@ Decision: fix and re-run (run 2) before any GO / NO-GO call.
   heading after the preamble, not of "NOT all that…" (SFSpeechRecognizer's worst error, 1.30 s, fits that).
 - Next: Diagnostics shows expected vs measured per reference and copies a full report (all heard words with times),
   so the miss can be attributed (reference vs aligner) before the GO / NO-GO call.
+
+## Run 3 — 2026-11-18, iPhone SE (3rd gen), build `f22926d` — words recorded, reference corrected
+
+Full report (all heard words with times): `ios/EarmarkKit/Sources/EarmarkTestSupport/Fixtures/pp-ch3-run3-report.txt`.
+
+| Engine | Words | s per audio min | Starts within 0.5 s (old 8-start reference) | Miss |
+|---|---|---|---|---|
+| SpeechAnalyzer | 509 | 1.40 | 7 of 8 | `0.1.0` expected 14.90, heard 10.56 (4.34 s): "Not" stretched over the 5 s pause before it |
+| SFSpeechRecognizer | 508 | 2.32 | 7 of 8 | `0.3.1` expected 83.71, heard 82.41 (1.30 s): engine merged "library he" |
+
+- The old reference (8 starts from pauses) was wrong: up to 0.4 s off, and `0.1.0` was 14.90 s where both engines hear
+  "Not" at about 15.4–15.7 s.
+- New reference (`pp-ch3-expected-starts.json` v2, 20 starts): consensus of the two engines; `0.3.1` left out because
+  the engines disagree. `RecordedSpikeRunTests` replays both recorded transcripts through the splitter and aligner.
+- **Decisions (owner, 2026-11-24):** Checkpoint B accepted as GO on the corrected reference. SpeechAnalyzer is the
+  primary engine, SFSpeechRecognizer the automatic fallback (`DeviceTranscriberChooser`). A word stretched over a
+  preceding pause (the `0.1.0` case) is fixed in the aligner (`SpokenTiming`), not by switching engines.

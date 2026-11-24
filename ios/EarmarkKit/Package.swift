@@ -19,7 +19,7 @@ var targets: [Target] = [
     .target(name: "EarmarkTestSupport", resources: [.copy("Fixtures")]),
     .testTarget(name: "ModelsTests", dependencies: ["Models", "EarmarkTestSupport"]),
     .testTarget(name: "ReadAlongCoreTests", dependencies: ["ReadAlongCore", "Models"]),
-    .testTarget(name: "AppFeaturesTests", dependencies: ["AppFeatures", "Models", "ReadAlongCore"]),
+    .testTarget(name: "AppFeaturesTests", dependencies: ["AppFeatures", "Models", "ReadAlongCore", "EPUBCore", "EarmarkTestSupport"]),
     .testTarget(name: "EPUBCoreTests", dependencies: ["EPUBCore", "Models", "ReadAlongCore", "EarmarkTestSupport"]),
 ]
 var products: [Product] = [
