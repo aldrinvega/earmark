@@ -30,10 +30,12 @@ public struct Aligner: Sendable {
         var spokenEnds: [TimeInterval] = []
         spokenTokens.reserveCapacity(transcript.count)
         for word in transcript {
-            for token in normalizer.words(in: word.text) {
+            let tokens = normalizer.words(in: word.text)
+            let times = SpokenTiming.tokenTimes(for: word, tokenCount: tokens.count, letters: tokens.map(\.count))
+            for (token, time) in zip(tokens, times) {
                 spokenTokens.append(token)
-                spokenStarts.append(word.start)
-                spokenEnds.append(word.end)
+                spokenStarts.append(time.start)
+                spokenEnds.append(time.end)
             }
         }
 
