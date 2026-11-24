@@ -11,12 +11,15 @@ var targets: [Target] = [
     .target(name: "Models"),
     // Text ↔ audio alignment on value types: normaliser, aligner, AlignmentMap. No Speech/AVFoundation.
     .target(name: "ReadAlongCore", dependencies: ["Models"]),
+    // Audiobookshelf API client behind an injectable transport and token store. Foundation only.
+    .target(name: "ABSClient", dependencies: ["Models"]),
     // One XHTML chapter → paragraphs → sentences with stable IDs, the input the aligner consumes. Foundation only.
     .target(name: "EPUBCore", dependencies: ["Models", "ReadAlongCore"]),
     // View models and UI logic for the app (Diagnostics first), testable without Xcode. Foundation + Observation only.
     .target(name: "AppFeatures", dependencies: ["Models", "ReadAlongCore", "EPUBCore"]),
     // Public-domain fixtures and test helpers (never shipped in the app).
     .target(name: "EarmarkTestSupport", resources: [.copy("Fixtures")]),
+    .testTarget(name: "ABSClientTests", dependencies: ["ABSClient"]),
     .testTarget(name: "ModelsTests", dependencies: ["Models", "EarmarkTestSupport"]),
     .testTarget(name: "ReadAlongCoreTests", dependencies: ["ReadAlongCore", "Models"]),
     .testTarget(name: "AppFeaturesTests", dependencies: ["AppFeatures", "Models", "ReadAlongCore", "EPUBCore", "EarmarkTestSupport"]),
@@ -24,6 +27,7 @@ var targets: [Target] = [
 ]
 var products: [Product] = [
     .library(name: "Models", targets: ["Models"]),
+    .library(name: "ABSClient", targets: ["ABSClient"]),
     .library(name: "ReadAlongCore", targets: ["ReadAlongCore"]),
     .library(name: "EPUBCore", targets: ["EPUBCore"]),
     .library(name: "AppFeatures", targets: ["AppFeatures"]),
