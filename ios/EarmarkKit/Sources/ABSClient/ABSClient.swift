@@ -78,6 +78,12 @@ public actor ABSClient {
         _ = try await authorized(path: "api/session/\(sessionID)/close", method: "POST", json: body)
     }
 
+    /// Saved progress for every Book the user has started.
+    public func allProgress() async throws -> [ABSBookProgress] {
+        struct Reply: Decodable { let mediaProgress: [ABSBookProgress]? }
+        return try decode(Reply.self, from: try await authorized(path: "api/me")).mediaProgress ?? []
+    }
+
     /// The server's saved progress, or `nil` when the Book was never started.
     public func progress(bookID: String) async throws -> ABSProgress? {
         do {

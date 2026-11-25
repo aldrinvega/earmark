@@ -11,6 +11,8 @@ public final class SignInModel {
     public private(set) var isWorking = false
     public private(set) var errorMessage: String?
     public private(set) var client: ABSClient?
+    /// `true` once the launch-time check for stored tokens has finished, so the sign-in screen does not flash.
+    public private(set) var hasRestored = false
 
     private let transport: HTTPTransport
     private let tokenStore: TokenStore
@@ -45,6 +47,7 @@ public final class SignInModel {
 
     /// At launch: signed in again with the stored tokens, if there are any.
     public func restore() async {
+        defer { hasRestored = true }
         guard client == nil, let url = Self.normalizedURL(serverAddress), await tokenStore.load() != nil else { return }
         client = ABSClient(baseURL: url, transport: transport, tokenStore: tokenStore)
     }

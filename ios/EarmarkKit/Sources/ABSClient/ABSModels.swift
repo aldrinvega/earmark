@@ -111,3 +111,14 @@ public struct ABSProgress: Sendable, Equatable, Decodable {
     /// Milliseconds since 1970, set by the server; the newest wins when two devices disagree.
     public let lastUpdate: Int64
 }
+
+/// One Book's saved progress from `GET /api/me` (`mediaProgress`), for the shelf and the Continue card.
+public struct ABSBookProgress: Sendable, Equatable, Decodable {
+    public let libraryItemId: String
+    public let currentTime: Double
+    public let duration: Double
+    public let progress: Double
+    public let isFinished: Bool
+    /// Milliseconds since 1970, stamped by the server.
+    public let lastUpdate: Int64
+}

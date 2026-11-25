@@ -186,6 +186,15 @@ private func client(_ steps: [FakeTransport.Step], tokens: ABSTokens? = ABSToken
         #expect(try await abs.progress(bookID: "b2") == nil)
     }
 
+    @Test func allProgressListsEveryStartedBook() async throws {
+        let body = #"{"id":"u","mediaProgress":[{"libraryItemId":"b1","duration":100,"progress":0.4,"currentTime":40,"isFinished":false,"lastUpdate":7},{"libraryItemId":"b2","duration":50,"progress":1,"currentTime":50,"isFinished":true,"lastUpdate":9}]}"#
+        let (abs, transport, _) = client([.reply(200, body), .reply(200, #"{"id":"u"}"#)])
+        let all = try await abs.allProgress()
+        #expect(all.map(\.libraryItemId) == ["b1", "b2"] && all[1].isFinished && all[0].lastUpdate == 7)
+        #expect(await transport.requests.first?.url.path == "/api/me")
+        #expect(try await abs.allProgress().isEmpty)
+    }
+
     @Test func theAudioRequestCarriesTheTokenAndTheTrackPath() async throws {
         let (abs, _, _) = client([])
         let track = try JSONDecoder().decode(ABSTrack.self, from: Data(

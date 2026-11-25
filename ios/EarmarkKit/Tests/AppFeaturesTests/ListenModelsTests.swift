@@ -136,6 +136,41 @@ private func page(_ ids: [String], total: Int) -> String {
         #expect(model.books.map(\.id) == ["a", "b", "c"])
     }
 
+    private func me(_ entries: [(id: String, progress: Double, time: Double, finished: Bool, updated: Int64)]) -> String {
+        let items = entries.map {
+            #"{"libraryItemId":"\#($0.id)","duration":100,"progress":\#($0.progress),"currentTime":\#($0.time),"isFinished":\#($0.finished),"lastUpdate":\#($0.updated)}"#
+        }
+        return #"{"id":"u","mediaProgress":[\#(items.joined(separator: ","))]}"#
+    }
+
+    @Test func statusesAndTheContinueBookComeFromServerProgress() async {
+        let progress = me([("a", 0.34, 34, false, 1_000), ("b", 1, 100, true, 5_000), ("c", 0.5, 50, false, 3_000)])
+        let model = model([.reply(200, libraries), .reply(200, page(["a", "b", "c", "d"], total: 4)), .reply(200, progress)])
+        await model.load()
+        let byID = Dictionary(uniqueKeysWithValues: model.books.map { ($0.id, $0) })
+        #expect(model.status(for: byID["a"]!) == "34% · 1 min left")
+        #expect(model.status(for: byID["b"]!) == "Finished")
+        #expect(model.status(for: byID["d"]!) == "New")
+        #expect(model.continueBook?.id == "c")
+        #expect(model.fractionDone(for: byID["a"]!) == 0.34)
+        #expect(model.fractionDone(for: byID["d"]!) == 0)
+    }
+
+    @Test func theShelfStillLoadsWhenProgressCannotBeRead() async {
+        let model = model([.reply(200, libraries), .reply(200, page(["a"], total: 1)), .reply(500, "")])
+        await model.load()
+        #expect(model.state == .loaded && model.continueBook == nil)
+        #expect(model.status(for: model.books[0]) == "New")
+    }
+
+    @Test func searchMatchesTitleAndAuthorIgnoringCase() async {
+        let model = model([.reply(200, libraries), .reply(200, page(["apple", "pear"], total: 2))])
+        await model.load()
+        #expect(model.search("PEAR").map(\.id) == ["pear"])
+        #expect(model.search("  ").count == 2)
+        #expect(model.search("zzz").isEmpty)
+    }
+
     @Test func aServerWithoutABookLibraryIsAMessage() async {
         let model = model([.reply(200, #"{"libraries":[{"id":"p","name":"Pods","mediaType":"podcast"}]}"#)])
         await model.load()

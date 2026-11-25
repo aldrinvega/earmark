@@ -1,4 +1,4 @@
-﻿import ABSClient
+import ABSClient
 import AppFeatures
 import AVFoundation
 import MediaPlayer
@@ -20,9 +20,11 @@ final class PlayerController {
 
     private(set) var loadState: LoadState = .idle
     private(set) var loadedBookID: String?
+    private(set) var currentBook: ABSBookSummary?
     private(set) var title = ""
     private(set) var author = ""
     private(set) var cover: UIImage?
+    private var coverData: Data?
     private(set) var position: TimeInterval = 0
     private(set) var duration: TimeInterval = 0
     private(set) var isPlaying = false
@@ -55,9 +57,11 @@ final class PlayerController {
         if loadedBookID == book.id, loadState == .ready { return }
         await stop()
         loadState = .loading
+        currentBook = book
         title = book.title
         author = book.authorName ?? ""
         cover = nil
+        coverData = nil
         do {
             let session = try await client.startPlayback(bookID: book.id, deviceID: deviceID)
             self.session = session
@@ -82,6 +86,7 @@ final class PlayerController {
             Task {
                 let data = try? await client.coverData(bookID: bookID)
                 if let data, loadedBookID == bookID {
+                    coverData = data
                     cover = UIImage(data: data)
                     updateNowPlaying()
                 }
@@ -204,8 +209,26 @@ final class PlayerController {
         }
         session = nil
         loadedBookID = nil
+        currentBook = nil
         loadState = .idle
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+    }
+
+    /// Opens a Book (if it is not the one already open) and starts playing.
+    func start(_ book: ABSBookSummary, deviceID: String) async {
+        if loadedBookID == book.id, loadState == .ready {
+            play()
+            return
+        }
+        await load(book, deviceID: deviceID)
+        if loadState == .ready { play() }
+    }
+
+    var chapters: [ChapterSpan] { timeline.chapters }
+
+    var currentChapterIndex: Int? {
+        guard let current = timeline.chapter(at: position) else { return nil }
+        return timeline.chapters.firstIndex(where: { $0.id == current.id })
     }
 
     // MARK: Ticking, syncing, recovery
@@ -317,8 +340,8 @@ final class PlayerController {
             MPNowPlayingInfoPropertyElapsedPlaybackTime: position,
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? Double(rate) : 0.0,
         ]
-        if let cover {
-            info[MPMediaItemPropertyArtwork] = SystemMedia.artwork(for: cover)
+        if let coverData, let cover {
+            info[MPMediaItemPropertyArtwork] = SystemMedia.artwork(data: coverData, size: cover.size)
         }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
@@ -328,8 +351,8 @@ final class PlayerController {
 /// inherits that isolation, and Swift 6 then traps when it runs off the main thread (this crashed the app as soon
 /// as a Book started playing). So they are built here, outside the player, and hop to the main actor themselves.
 private enum SystemMedia {
-    nonisolated static func artwork(for image: UIImage) -> MPMediaItemArtwork {
-        MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+    nonisolated static func artwork(data: Data, size: CGSize) -> MPMediaItemArtwork {
+        MPMediaItemArtwork(boundsSize: size) { _ in UIImage(data: data) ?? UIImage() }
     }
 
     nonisolated static func installRemoteCommands(for player: PlayerController) {
