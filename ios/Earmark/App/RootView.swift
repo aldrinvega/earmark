@@ -23,7 +23,7 @@ struct RootView: View {
                         Text(Self.subtitle)
                             .font(.headline)
                             .foregroundStyle(.secondary)
-                        Text("The pipeline works. Sign-in and your library come next.")
+                        Text("Sign in to your Audiobookshelf server and listen.")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -32,6 +32,16 @@ struct RootView: View {
                     .padding(28)
                     .frame(maxWidth: 340)
                     .glassEffect(.regular, in: .rect(cornerRadius: 32))
+
+                    NavigationLink {
+                        ListenView()
+                    } label: {
+                        Label("Listen", systemImage: "headphones")
+                            .font(.headline)
+                            .padding(.horizontal, 8)
+                    }
+                    .buttonStyle(.glassProminent)
+                    .accessibilityIdentifier("open-listen")
 
                     NavigationLink {
                         DiagnosticsView()

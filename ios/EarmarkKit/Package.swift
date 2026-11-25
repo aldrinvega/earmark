@@ -18,14 +18,14 @@ var targets: [Target] = [
     // One XHTML chapter → paragraphs → sentences with stable IDs, the input the aligner consumes. Foundation only.
     .target(name: "EPUBCore", dependencies: ["Models", "ReadAlongCore"]),
     // View models and UI logic for the app (Diagnostics first), testable without Xcode. Foundation + Observation only.
-    .target(name: "AppFeatures", dependencies: ["Models", "ReadAlongCore", "EPUBCore"]),
+    .target(name: "AppFeatures", dependencies: ["Models", "ReadAlongCore", "EPUBCore", "ABSClient", "PlaybackCore"]),
     // Public-domain fixtures and test helpers (never shipped in the app).
     .target(name: "EarmarkTestSupport", resources: [.copy("Fixtures")]),
     .testTarget(name: "ABSClientTests", dependencies: ["ABSClient"]),
     .testTarget(name: "PlaybackCoreTests", dependencies: ["PlaybackCore"]),
     .testTarget(name: "ModelsTests", dependencies: ["Models", "EarmarkTestSupport"]),
     .testTarget(name: "ReadAlongCoreTests", dependencies: ["ReadAlongCore", "Models"]),
-    .testTarget(name: "AppFeaturesTests", dependencies: ["AppFeatures", "Models", "ReadAlongCore", "EPUBCore", "EarmarkTestSupport"]),
+    .testTarget(name: "AppFeaturesTests", dependencies: ["AppFeatures", "Models", "ReadAlongCore", "EPUBCore", "ABSClient", "EarmarkTestSupport"]),
     .testTarget(name: "EPUBCoreTests", dependencies: ["EPUBCore", "Models", "ReadAlongCore", "EarmarkTestSupport"]),
 ]
 var products: [Product] = [

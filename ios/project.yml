@@ -40,6 +40,10 @@ targets:
         product: EPUBCore
       - package: EarmarkKit
         product: AppFeatures
+      - package: EarmarkKit
+        product: ABSClient
+      - package: EarmarkKit
+        product: PlaybackCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: local.earmark
