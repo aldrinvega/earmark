@@ -1,4 +1,4 @@
-import ABSClient
+﻿import ABSClient
 import AppFeatures
 import AVFoundation
 import MediaPlayer
@@ -305,43 +305,7 @@ final class PlayerController {
     private func installRemoteCommands() {
         guard !remoteCommandsInstalled else { return }
         remoteCommandsInstalled = true
-        let center = MPRemoteCommandCenter.shared()
-        center.playCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.play() }
-            return .success
-        }
-        center.pauseCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.pause() }
-            return .success
-        }
-        center.togglePlayPauseCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.togglePlayPause() }
-            return .success
-        }
-        center.skipBackwardCommand.preferredIntervals = [NSNumber(value: SkipRules.back)]
-        center.skipBackwardCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.skipBack() }
-            return .success
-        }
-        center.skipForwardCommand.preferredIntervals = [NSNumber(value: SkipRules.forward)]
-        center.skipForwardCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.skipForward() }
-            return .success
-        }
-        center.nextTrackCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.nextChapter() }
-            return .success
-        }
-        center.previousTrackCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.previousChapter() }
-            return .success
-        }
-        center.changePlaybackPositionCommand.addTarget { [weak self] event in
-            guard let event = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
-            let time = event.positionTime
-            Task { @MainActor in self?.seek(to: time) }
-            return .success
-        }
+        SystemMedia.installRemoteCommands(for: self)
     }
 
     private func updateNowPlaying() {
@@ -354,8 +318,57 @@ final class PlayerController {
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? Double(rate) : 0.0,
         ]
         if let cover {
-            info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: cover.size) { _ in cover }
+            info[MPMediaItemPropertyArtwork] = SystemMedia.artwork(for: cover)
         }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+}
+
+/// MediaPlayer calls these closures on its own background queues. A closure written inside a `@MainActor` type
+/// inherits that isolation, and Swift 6 then traps when it runs off the main thread (this crashed the app as soon
+/// as a Book started playing). So they are built here, outside the player, and hop to the main actor themselves.
+private enum SystemMedia {
+    nonisolated static func artwork(for image: UIImage) -> MPMediaItemArtwork {
+        MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+    }
+
+    nonisolated static func installRemoteCommands(for player: PlayerController) {
+        let center = MPRemoteCommandCenter.shared()
+        center.playCommand.addTarget { [weak player] _ in
+            Task { @MainActor in player?.play() }
+            return .success
+        }
+        center.pauseCommand.addTarget { [weak player] _ in
+            Task { @MainActor in player?.pause() }
+            return .success
+        }
+        center.togglePlayPauseCommand.addTarget { [weak player] _ in
+            Task { @MainActor in player?.togglePlayPause() }
+            return .success
+        }
+        center.skipBackwardCommand.preferredIntervals = [NSNumber(value: SkipRules.back)]
+        center.skipBackwardCommand.addTarget { [weak player] _ in
+            Task { @MainActor in player?.skipBack() }
+            return .success
+        }
+        center.skipForwardCommand.preferredIntervals = [NSNumber(value: SkipRules.forward)]
+        center.skipForwardCommand.addTarget { [weak player] _ in
+            Task { @MainActor in player?.skipForward() }
+            return .success
+        }
+        center.nextTrackCommand.addTarget { [weak player] _ in
+            Task { @MainActor in player?.nextChapter() }
+            return .success
+        }
+        center.previousTrackCommand.addTarget { [weak player] _ in
+            Task { @MainActor in player?.previousChapter() }
+            return .success
+        }
+        center.changePlaybackPositionCommand.addTarget { [weak player] event in
+            guard let event = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
+            let time = event.positionTime
+            Task { @MainActor in player?.seek(to: time) }
+            return .success
+        }
     }
 }
