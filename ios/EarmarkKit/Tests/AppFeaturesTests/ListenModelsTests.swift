@@ -195,6 +195,72 @@ private func page(_ ids: [String], total: Int) -> String {
     }
 }
 
+@MainActor @Suite struct CoverPickerModelTests {
+    private func picker(_ steps: [ReplayTransport.Step], title: String = "Atomic Habits: An Easy & Proven Way") -> (CoverPickerModel, ReplayTransport) {
+        let transport = ReplayTransport(steps)
+        let client = ABSClient(baseURL: URL(string: "https://abs.test")!, transport: transport,
+                               tokenStore: InMemoryTokenStore(ABSTokens(access: "A", refresh: "R")))
+        let book = ABSBookSummary.testBook(id: "b1", title: title, author: "James Clear")
+        return (CoverPickerModel(book: book, client: client), transport)
+    }
+
+    @Test func searchTitleDropsTheSubtitle() {
+        #expect(CoverPickerModel.searchTitle(for: "Atomic Habits: An Easy & Proven Way") == "Atomic Habits")
+        #expect(CoverPickerModel.searchTitle(for: "Deep Work") == "Deep Work")
+        #expect(CoverPickerModel.searchTitle(for: ": Odd") == "Odd")
+    }
+
+    @Test func searchingListsCandidatesAndCapsThem() async {
+        let links = (1...40).map { "\"https://img.test/\($0).jpg\"" }.joined(separator: ",")
+        let (model, _) = picker([.reply(200, #"{"results":[\#(links)]}"#)])
+        await model.search()
+        #expect(model.state == .results && model.candidates.count == 24)
+    }
+
+    @Test func noResultsIsAnEmptyState() async {
+        let (model, _) = picker([.reply(200, #"{"results":[]}"#)])
+        await model.search()
+        #expect(model.state == .empty && model.candidates.isEmpty)
+    }
+
+    @Test func aSearchFailureIsAMessage() async {
+        let (model, _) = picker([.fail])
+        await model.search()
+        if case .failed(let message) = model.state {
+            #expect(message.hasPrefix("Can't reach the server"))
+        } else {
+            Issue.record("expected a failure")
+        }
+    }
+
+    @Test func choosingSavesTheCover() async {
+        let (model, transport) = picker([.reply(200, "{}")])
+        let saved = await model.choose(URL(string: "https://img.test/1.jpg")!)
+        #expect(saved && model.state == .results)
+        #expect(await transport.paths == ["/api/items/b1/cover"])
+    }
+
+    @Test func aRefusedSaveExplainsWhy() async {
+        let (model, _) = picker([.reply(403, "")])
+        let saved = await model.choose(URL(string: "https://img.test/1.jpg")!)
+        #expect(!saved)
+        if case .failed(let message) = model.state {
+            #expect(message.contains("admin or editor"))
+        } else {
+            Issue.record("expected a failure")
+        }
+    }
+}
+
+extension ABSBookSummary {
+    /// A Book for tests, decoded from the same JSON shape the server sends.
+    static func testBook(id: String, title: String, author: String?) -> ABSBookSummary {
+        let authorField = author.map { #","authorName":"\#($0)""# } ?? ""
+        let json = #"{"id":"\#(id)","media":{"metadata":{"title":"\#(title)"\#(authorField)},"duration":60,"numChapters":1}}"#
+        return try! JSONDecoder().decode(ABSBookSummary.self, from: Data(json.utf8))
+    }
+}
+
 @Suite struct TimeFormatTests {
     @Test func clockShowsMinutesOrHours() {
         #expect(TimeFormat.clock(75) == "1:15")
@@ -202,6 +268,14 @@ private func page(_ ids: [String], total: Int) -> String {
         #expect(TimeFormat.clock(0) == "0:00")
         #expect(TimeFormat.clock(-4) == "0:00")
         #expect(TimeFormat.clock(.nan) == "0:00")
+    }
+
+    @Test func leftIsShortForTheShelf() {
+        #expect(TimeFormat.left(19620) == "5 h left")
+        #expect(TimeFormat.left(2460) == "41 min left")
+        #expect(TimeFormat.left(40) == "1 min left")
+        #expect(TimeFormat.left(0) == "0 min left")
+        #expect(TimeFormat.left(.nan) == "0 min left")
     }
 
     @Test func lengthRoundsToMinutes() {
@@ -213,7 +287,7 @@ private func page(_ ids: [String], total: Int) -> String {
 
 @Suite struct ABSErrorTextTests {
     @Test func everyErrorHasAHumanMessage() {
-        let errors: [ABSError] = [.unreachable, .unauthorized, .notFound, .decoding("x"), .server(status: 500)]
+        let errors: [ABSError] = [.unreachable, .unauthorized, .forbidden, .notFound, .decoding("x"), .server(status: 500)]
         for error in errors { #expect(!ABSErrorText.message(for: error).isEmpty) }
         #expect(ABSErrorText.message(for: ABSError.server(status: 502)).contains("502"))
         #expect(ABSErrorText.message(for: URLError(.badURL)) == "Something went wrong. Try again.")

@@ -6,8 +6,10 @@ import SwiftUI
 struct SearchView: View {
     let library: LibraryModel
     let covers: CoverStore
+    let client: ABSClient
     let play: (ABSBookSummary) -> Void
     @State private var text = ""
+    @State private var coverBook: ABSBookSummary?
 
     var body: some View {
         NavigationStack {
@@ -27,6 +29,9 @@ struct SearchView: View {
                         }
                     }
                     .buttonStyle(.plain)
+                    .contextMenu {
+                        Button("Find a better cover…", systemImage: "photo.on.rectangle") { coverBook = book }
+                    }
                     .listRowBackground(Color.clear)
                 }
                 .scrollContentBackground(.hidden)
@@ -39,7 +44,7 @@ struct SearchView: View {
             .foregroundStyle(Theme.ink)
             .navigationTitle("Search")
             .searchable(text: $text, prompt: "Title or author")
+            .sheet(item: $coverBook) { CoverPickerSheet(book: $0, client: client, covers: covers) }
         }
-        .preferredColorScheme(.light)
     }
 }

@@ -66,14 +66,14 @@ public final class LibraryModel {
         return nil
     }
 
-    /// "34% · 9 h 5 min left", "New" or "Finished".
+    /// "34% · 9 h left", "New" or "Finished".
     public func status(for book: ABSBookSummary) -> String {
         guard let entry = progress[book.id] else { return "New" }
         if entry.isFinished { return "Finished" }
         guard entry.progress > 0 else { return "New" }
         let total = entry.duration > 0 ? entry.duration : book.duration
         let left = max(total - entry.currentTime, 0)
-        return "\(Int((entry.progress * 100).rounded()))% · \(TimeFormat.length(left)) left"
+        return "\(Int((entry.progress * 100).rounded()))% · \(TimeFormat.left(left))"
     }
 
     public func fractionDone(for book: ABSBookSummary) -> Double {

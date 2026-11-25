@@ -195,6 +195,42 @@ private func client(_ steps: [FakeTransport.Step], tokens: ABSTokens? = ABSToken
         #expect(try await abs.allProgress().isEmpty)
     }
 
+    @Test func coverSearchEncodesTheQueryAndKeepsOnlyHttpsLinks() async throws {
+        let body = #"{"results":["https://img.example.test/a.jpg","http://insecure.example.test/b.jpg","not a url","https://img.example.test/c.jpg"]}"#
+        let (abs, transport, _) = client([.reply(200, body)])
+        let found = try await abs.searchCovers(title: "Pride & Prejudice", author: "Jane Austen", provider: "audible")
+        #expect(found.map(\.absoluteString) == ["https://img.example.test/a.jpg", "https://img.example.test/c.jpg"])
+        let request = try #require(await transport.requests.first)
+        #expect(request.url.path == "/api/search/covers")
+        // "&" inside the title must not split it into two parameters.
+        #expect(request.url.absoluteString.hasSuffix("title=Pride%20%26%20Prejudice&provider=audible&author=Jane%20Austen"))
+    }
+
+    @Test func coverSearchWithoutResultsIsEmpty() async throws {
+        let (abs, _, _) = client([.reply(200, #"{"results":[]}"#), .reply(200, "{}")])
+        #expect(try await abs.searchCovers(title: "X", author: nil, provider: "itunes").isEmpty)
+        #expect(try await abs.searchCovers(title: "X", author: "", provider: "itunes").isEmpty)
+    }
+
+    @Test func settingACoverPostsTheImageLink() async throws {
+        let (abs, transport, _) = client([.reply(200, #"{"success":true}"#)])
+        try await abs.setCover(bookID: "b1", from: URL(string: "https://img.example.test/a.jpg")!)
+        let request = try #require(await transport.requests.first)
+        #expect(request.method == "POST" && request.url.path == "/api/items/b1/cover")
+        let data = try #require(request.body)
+        let body = try #require(try JSONSerialization.jsonObject(with: data) as? [String: String])
+        #expect(body == ["url": "https://img.example.test/a.jpg"])
+    }
+
+    @Test func anAccountThatMayNotEditIsForbiddenNotSignedOut() async {
+        let (abs, transport, store) = client([.reply(403, "")])
+        await #expect(throws: ABSError.forbidden) {
+            try await abs.setCover(bookID: "b1", from: URL(string: "https://img.example.test/a.jpg")!)
+        }
+        #expect(await transport.requests.count == 1)
+        #expect(await store.load() != nil)
+    }
+
     @Test func theAudioRequestCarriesTheTokenAndTheTrackPath() async throws {
         let (abs, _, _) = client([])
         let track = try JSONDecoder().decode(ABSTrack.self, from: Data(

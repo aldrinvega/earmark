@@ -11,6 +11,13 @@ public enum TimeFormat {
         return String(format: "%d:%02d", minutes, secs)
     }
 
+    /// The short form for the shelf: 19620 → "5 h left", 2460 → "41 min left".
+    public static func left(_ seconds: TimeInterval) -> String {
+        let minutes = seconds.isFinite ? max(Int((seconds / 60).rounded()), 0) : 0
+        if minutes >= 60 { return "\(Int((Double(minutes) / 60).rounded())) h left" }
+        return "\(minutes) min left"
+    }
+
     /// 25199 → "7 h 0 min", 1800 → "30 min".
     public static func length(_ seconds: TimeInterval) -> String {
         let minutes = seconds.isFinite ? max(Int((seconds / 60).rounded()), 0) : 0

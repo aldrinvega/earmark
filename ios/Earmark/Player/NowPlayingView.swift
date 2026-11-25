@@ -22,7 +22,6 @@ struct NowPlayingView: View {
             }
         }
         .foregroundStyle(.white)
-        .preferredColorScheme(.dark)
         .sheet(isPresented: $showChapters) { ChaptersSheet(player: player, covers: covers) }
     }
 
@@ -44,6 +43,7 @@ struct NowPlayingView: View {
                 }
                 Text(book.title).font(.system(size: 14, weight: .semibold)).lineLimit(1)
             }
+            .padding(.horizontal, 28)
             .padding(.top, 12)
 
             CoverView(book: book, store: covers, cornerRadius: 16)

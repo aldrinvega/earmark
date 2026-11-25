@@ -18,6 +18,11 @@ actor CoverStore {
         cache.setObject(data as NSData, forKey: bookID as NSString)
         return data
     }
+
+    /// Forgets a Book's cached cover (after it was replaced on the server).
+    func invalidate(_ bookID: String) {
+        cache.removeObject(forKey: bookID as NSString)
+    }
 }
 
 /// A Book's cover, square (that is what Audiobookshelf serves). Until the image arrives, or without one, a spine-style
@@ -29,18 +34,32 @@ struct CoverView: View {
     @State private var image: UIImage?
 
     var body: some View {
-        ZStack {
-            if let image {
-                Image(uiImage: image).resizable().scaledToFill()
-            } else {
-                placeholder
+        // The tile is always square. A portrait or wide cover is shown whole, centred over a blurred copy of itself,
+        // so it neither stretches the tile nor loses its edges.
+        Color.clear
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                if let image {
+                    ZStack {
+                        if abs(image.size.width / max(image.size.height, 1) - 1) > 0.05 {
+                            Image(uiImage: image).resizable().scaledToFill().blur(radius: 20).opacity(0.6)
+                        }
+                        Image(uiImage: image).resizable().scaledToFit()
+                    }
+                } else {
+                    placeholder
+                }
             }
-        }
-        .aspectRatio(1, contentMode: .fit)
-        .clipShape(.rect(cornerRadius: cornerRadius))
+            .clipShape(.rect(cornerRadius: cornerRadius))
         .shadow(color: .black.opacity(0.18), radius: 8, y: 5)
         .task(id: book.id) {
             if let data = await store.imageData(for: book.id) { image = UIImage(data: data) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .coverChanged)) { note in
+            guard note.object as? String == book.id else { return }
+            Task {
+                if let data = await store.imageData(for: book.id) { image = UIImage(data: data) }
+            }
         }
         .accessibilityHidden(true)
     }
@@ -62,4 +81,9 @@ struct CoverView: View {
             .foregroundStyle(Color(hex: pick.1))
         }
     }
+}
+
+extension Notification.Name {
+    /// Posted (object: the Book's id) after a Book's cover was replaced, so every `CoverView` for it reloads.
+    static let coverChanged = Notification.Name("earmark.coverChanged")
 }

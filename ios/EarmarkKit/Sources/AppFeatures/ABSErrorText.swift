@@ -10,6 +10,8 @@ public enum ABSErrorText {
             return "Can't reach the server. Check that the Mac is on and Tailscale is connected."
         case .unauthorized:
             return signingIn ? "Sign-in failed. Check the username and password." : "Your session expired. Sign in again."
+        case .forbidden:
+            return "This account isn't allowed to do that. Sign in with an admin or editor account."
         case .notFound:
             return "The server doesn't have that item."
         case .decoding:

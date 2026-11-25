@@ -78,6 +78,24 @@ public actor ABSClient {
         _ = try await authorized(path: "api/session/\(sessionID)/close", method: "POST", json: body)
     }
 
+    // MARK: Covers
+
+    /// Cover candidates the server finds at a provider (`audible`, `itunes`, `google`, `openlibrary`). The server does
+    /// the lookup; only https image links are returned.
+    public func searchCovers(title: String, author: String?, provider: String) async throws -> [URL] {
+        struct Reply: Decodable { let results: [String]? }
+        var query = [URLQueryItem(name: "title", value: title), URLQueryItem(name: "provider", value: provider)]
+        if let author, !author.isEmpty { query.append(URLQueryItem(name: "author", value: author)) }
+        let reply = try decode(Reply.self, from: try await authorized(path: "api/search/covers", query: query))
+        return (reply.results ?? []).compactMap { URL(string: $0) }.filter { $0.scheme == "https" }
+    }
+
+    /// Makes the server download `url` and use it as the Book's cover. Changes the library for every client, and
+    /// needs an account that may update Books.
+    public func setCover(bookID: String, from url: URL) async throws {
+        _ = try await authorized(path: "api/items/\(bookID)/cover", method: "POST", json: ["url": url.absoluteString])
+    }
+
     /// Saved progress for every Book the user has started.
     public func allProgress() async throws -> [ABSBookProgress] {
         struct Reply: Decodable { let mediaProgress: [ABSBookProgress]? }
@@ -104,8 +122,20 @@ public actor ABSClient {
 
     private func url(_ path: String, query: [URLQueryItem] = []) -> URL {
         var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false)!
-        if !query.isEmpty { components.queryItems = query }
+        if !query.isEmpty {
+            // Encoded by hand: URLComponents leaves "&" and "+" in a value alone, which would split a title like
+            // "Pride & Prejudice" into two parameters.
+            components.percentEncodedQuery = query.map { "\(Self.encode($0.name))=\(Self.encode($0.value ?? ""))" }
+                .joined(separator: "&")
+        }
         return components.url!
+    }
+
+    private static let unreserved = CharacterSet(charactersIn:
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
+
+    private static func encode(_ text: String) -> String {
+        text.addingPercentEncoding(withAllowedCharacters: unreserved) ?? text
     }
 
     private func authorized(path: String, query: [URLQueryItem] = [], method: String = "GET",
@@ -157,7 +187,8 @@ public actor ABSClient {
         }
         switch response.status {
         case 200..<300: return response
-        case 401, 403: throw ABSError.unauthorized
+        case 401: throw ABSError.unauthorized
+        case 403: throw ABSError.forbidden
         case 404: throw ABSError.notFound
         default: throw ABSError.server(status: response.status)
         }

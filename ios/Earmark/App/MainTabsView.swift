@@ -12,6 +12,7 @@ struct MainTabsView: View {
     }
 
     let signIn: SignInModel
+    private let client: ABSClient
     @State private var library: LibraryModel
     @State private var player: PlayerController
     @State private var covers: CoverStore
@@ -19,6 +20,7 @@ struct MainTabsView: View {
 
     init(client: ABSClient, signIn: SignInModel) {
         self.signIn = signIn
+        self.client = client
         _library = State(initialValue: LibraryModel(client: client, onSessionExpired: { await signIn.sessionExpired() }))
         _player = State(initialValue: PlayerController(client: client))
         _covers = State(initialValue: CoverStore(client: client))
@@ -30,13 +32,15 @@ struct MainTabsView: View {
                 NowPlayingView(player: player, covers: covers)
             }
             Tab("Library", systemImage: "books.vertical", value: AppTab.library) {
-                LibraryView(library: library, covers: covers, signIn: signIn, player: player, play: start)
+                LibraryView(library: library, covers: covers, signIn: signIn, player: player, client: client, play: start)
             }
             Tab(value: AppTab.search, role: .search) {
-                SearchView(library: library, covers: covers, play: start)
+                SearchView(library: library, covers: covers, client: client, play: start)
             }
         }
-        .tint(Theme.plum)
+        // Set here, not per screen: the tab bar takes its colours from the TabView.
+        .preferredColorScheme(selection == .listen ? .dark : .light)
+        .tint(selection == .listen ? .white : Theme.plum)
         .miniPlayer(visible: selection != .listen && player.loadState == .ready) {
             MiniPlayerView(player: player, covers: covers) { selection = .listen }
         }

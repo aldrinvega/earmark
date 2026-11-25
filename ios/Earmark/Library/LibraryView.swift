@@ -8,8 +8,10 @@ struct LibraryView: View {
     let covers: CoverStore
     let signIn: SignInModel
     let player: PlayerController
+    let client: ABSClient
     let play: (ABSBookSummary) -> Void
     @State private var showDiagnostics = false
+    @State private var coverBook: ABSBookSummary?
 
     private let columns = [GridItem(.adaptive(minimum: 100), spacing: 12, alignment: .top)]
 
@@ -29,9 +31,9 @@ struct LibraryView: View {
                 .refreshable { await library.load() }
             }
             .foregroundStyle(Theme.ink)
-            .preferredColorScheme(.light)
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(isPresented: $showDiagnostics) { DiagnosticsView() }
+            .sheet(item: $coverBook) { CoverPickerSheet(book: $0, client: client, covers: covers) }
         }
     }
 
@@ -61,6 +63,9 @@ struct LibraryView: View {
     private func continueCard(_ book: ABSBookSummary) -> some View {
         HStack(alignment: .top, spacing: 16) {
             CoverView(book: book, store: covers, cornerRadius: 12).frame(width: 104, height: 104)
+                .contextMenu {
+                    Button("Find a better cover…", systemImage: "photo.on.rectangle") { coverBook = book }
+                }
             VStack(alignment: .leading, spacing: 0) {
                 Text("CONTINUE").font(.system(size: 11, weight: .semibold)).tracking(0.9).foregroundStyle(Theme.plum)
                 Text(book.title).font(Theme.serif(21)).lineLimit(2).padding(.top, 4)
@@ -124,9 +129,13 @@ struct LibraryView: View {
                         }
                     }
                     .buttonStyle(.plain)
+                    .contextMenu {
+                        Button("Find a better cover…", systemImage: "photo.on.rectangle") { coverBook = book }
+                    }
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel("\(book.title), \(library.status(for: book))")
                     .accessibilityAddTraits(.isButton)
+                    .accessibilityAction(named: "Find a better cover") { coverBook = book }
                 }
             }
         }

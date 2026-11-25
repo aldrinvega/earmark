@@ -26,7 +26,7 @@ public struct ABSTrack: Sendable, Equatable, Decodable {
 }
 
 /// One Book in a library listing.
-public struct ABSBookSummary: Sendable, Equatable, Decodable {
+public struct ABSBookSummary: Sendable, Equatable, Decodable, Identifiable {
     public let id: String
     public let title: String
     public let authorName: String?

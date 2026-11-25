@@ -6,6 +6,8 @@ public enum ABSError: Error, Equatable, Sendable {
     case unreachable
     /// Wrong credentials, or the session cannot be renewed: sign in again.
     case unauthorized
+    /// Signed in, but this account may not do that (for example, changing a cover needs an admin or editor account).
+    case forbidden
     case notFound
     case decoding(String)
     case server(status: Int)
